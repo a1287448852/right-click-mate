@@ -8,6 +8,19 @@ macOS Finder 右键增强，对标 iRightMouse「超级右键」。全部用 mac
 > **构建要求：装 Xcode。** `@State` / `@Namespace` 是编译器宏，实现（`SwiftUIMacros`）只在 Xcode 的工具链里，命令行工具不带。
 > 构建脚本直接用 Xcode 工具链的绝对路径，**不需要 sudo，也不改你的 `xcode-select` 全局设置**。
 
+## 下载安装
+
+不用自己编译：[**下载 DMG**](https://github.com/a1287448852/right-click-mate/releases/latest)
+
+打开 DMG，把「右键伴侣」拖进 Applications。**首次打开会被系统拦下**，提示"无法验证开发者"——本项目没有 Apple 开发者签名（$99/年），不是有问题。放行方法二选一：
+
+1. 在「应用程序」里**右键点图标 → 打开 → 再点一次「打开」**
+2. 或者终端执行 `xattr -cr "/Applications/右键伴侣.app"`
+
+然后在 App 的「通用设置」里点「打开访达扩展管理面板」，确认扩展是开启状态。
+
+自己打包 DMG：`./make-dmg.sh`
+
 ## 功能
 
 - **新建文件**：17 种文件类型（纯文本 / Markdown / Word / Excel / PPT / WPS / Pages / PSD …），可增删、可拖拽排序，列表顺序就是右键菜单顺序
@@ -21,8 +34,6 @@ macOS Finder 右键增强，对标 iRightMouse「超级右键」。全部用 mac
 
 SwiftUI 写的设置窗口，五个面板：**通用设置 / 新建文件 / 发送文件到 / 常用目录 / 工具箱**。
 改动即时写入 `~/Library/Application Support/SuperRightClick/config.json`，扩展每次弹菜单时重读，改完不用重启。
-
-### 设计系统
 
 ## 构建与安装
 
@@ -73,7 +84,8 @@ SwiftUI 版为什么需要 Xcode：`@State` / `@Namespace` 是**编译器宏**�
 修法是窗口层（不是内容层）的两件事，都在 `SettingsView.swift` 里：
 
 - `TransparentWindow`：把 `NSWindow.isOpaque` 设为 false、`backgroundColor` 设为 clear
-- `DesktopBackdrop`：铺一层 `NSVisualEffectView`，`blendingMode = .behindWindow`，采样窗口背后的桌面
+
+**关键：不要再自己铺一层 `NSVisualEffectView` 背板。** 我一开始铺了（`.underWindowBackground`），结果是**两层模糊叠加**——窗口背板 + 系统侧栏材质——糊成一块灰板，反而更不玻璃。窗口一旦透明，系统侧栏材质自己就会采样桌面，单层采样才通透。
 
 SwiftUI 这代**没有 `.window` 的 `containerBackground` 放置点**（只有 `.tabView` / `.navigation`），所以这步必须桥 AppKit。之后侧栏的玻璃立刻显形，而**内容层依然不透明**（`Color(nsColor: .windowBackgroundColor)`），文字对比度不受影响。
 
