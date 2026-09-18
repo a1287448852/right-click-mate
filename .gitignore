@@ -1,0 +1,19 @@
+# 构建产物
+build/
+build-swiftui/
+*.iconset/
+*.appiconset/
+*.app/
+*.icns
+
+# macOS
+.DS_Store
+
+# Xcode
+xcuserdata/
+DerivedData/
+*.xcuserstate
+
+# 编辑器
+.vscode/
+.idea/

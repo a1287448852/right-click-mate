@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- 扩展必须沙盒化，系统才让加载 -->
+	<key>com.apple.security.app-sandbox</key>
+	<true/>
+	<!-- 允许操作右键选中的文件 -->
+	<key>com.apple.security.files.user-selected.read-write</key>
+	<true/>
+	<!-- 用户主目录整棵树读写 -->
+	<key>com.apple.security.temporary-exception.files.home-relative-path.read-write</key>
+	<array>
+		<string>/</string>
+	</array>
+	<!-- 主目录之外（/Library、/Users/Shared、外接盘挂载点等）也要能读写。
+	     没有这条，在系统目录里右键新建文件会 created=false。
+	     iRightMouse 是靠让用户去开「完全磁盘访问权限」解决同一问题的。 -->
+	<key>com.apple.security.temporary-exception.files.absolute-path.read-write</key>
+	<array>
+		<string>/</string>
+	</array>
+</dict>
+</plist>
