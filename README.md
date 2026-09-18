@@ -2,6 +2,8 @@
 
 macOS Finder 右键增强，对标 iRightMouse「超级右键」。全部用 macOS 系统原生 API 实现，无第三方依赖。
 
+![右键伴侣设置界面](docs/settings-general.png)
+
 > **系统要求：macOS 27.0 或更高。**
 > 用了 macOS 27 的 `DynamicViewContent.reorderable()` 和 Liquid Glass，不为旧系统写降级分支。
 >
@@ -34,6 +36,10 @@ macOS Finder 右键增强，对标 iRightMouse「超级右键」。全部用 mac
 
 SwiftUI 写的设置窗口，五个面板：**通用设置 / 新建文件 / 发送文件到 / 常用目录 / 工具箱**。
 改动即时写入 `~/Library/Application Support/SuperRightClick/config.json`，扩展每次弹菜单时重读，改完不用重启。
+
+每个文件类型显示 macOS 给它的**真实系统图标**，一眼认得出；拖动行可以调整顺序，而**列表顺序就是右键菜单顺序**：
+
+![新建文件面板](docs/settings-newfile.png)
 
 ## 构建与安装
 
