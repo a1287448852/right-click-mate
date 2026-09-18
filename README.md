@@ -159,6 +159,14 @@ SwiftUI 这代**没有 `.window` 的 `containerBackground` 放置点**（只有 
 4. iCloud / OneDrive 目录里显示菜单
 5. 开机自启、鼠标中键 / 三指轻点触发
 
+## 参与贡献
+
+**欢迎提 [Issue](https://github.com/a1287448852/right-click-mate/issues)** —— 看到了就会修、会优化。功能建议、性能问题、兼容性反馈、UI 意见都欢迎，不用客气。
+
+**也欢迎你贡献代码。** 修 bug、加功能、做性能优化都可以，一起把它打磨成一个真正高性能的 macOS 原生应用。
+
+提交 PR 之前建议先开个 Issue 聊一下思路，避免方向不一致白做——不是流程要求，只是省你时间。
+
 ## 许可证
 
 MIT。转载、修改、商用都可以，**保留版权声明即可**（见 [LICENSE](LICENSE)）。
