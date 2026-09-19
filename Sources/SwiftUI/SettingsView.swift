@@ -15,8 +15,106 @@ import UniformTypeIdentifiers
 //
 // 用了 macOS 27 的新特性：DynamicViewContent.reorderable() 拖拽排序。
 
+// MARK: - 菜单栏驻留
+
+/// 菜单栏状态项。
+///
+/// 用 AppKit 的 `NSStatusItem` 而不是 SwiftUI 的 `MenuBarExtra` ——
+/// 同样都是苹果官方 API（`MenuBarExtra` 底层就是它），但这里行为完全确定，
+/// 不会出现"加了 Scene 却什么都没显示"这种看不见摸不着的状况。
+final class StatusItemController: NSObject {
+    static let shared = StatusItemController()
+    private var statusItem: NSStatusItem?
+
+    private override init() { super.init() }
+
+    func setVisible(_ visible: Bool) {
+        visible ? install() : uninstall()
+    }
+
+    private func install() {
+        guard statusItem == nil else { return }
+        let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        if let button = item.button {
+            let image = NSImage(systemSymbolName: "cursorarrow.click", accessibilityDescription: AppInfo.name)
+            image?.isTemplate = true
+            button.image = image
+            button.toolTip = AppInfo.name
+        }
+
+        let menu = NSMenu()
+        menu.addItem(withTitle: "打开设置…", action: #selector(openSettings), keyEquivalent: "")
+        menu.addItem(withTitle: "访达扩展管理…", action: #selector(openExtensionSettings), keyEquivalent: "")
+        menu.addItem(.separator())
+        menu.addItem(withTitle: "退出 \(AppInfo.name)", action: #selector(quit), keyEquivalent: "q")
+        for entry in menu.items { entry.target = self }
+        item.menu = menu
+
+        statusItem = item
+        diag("菜单栏状态项已安装")
+    }
+
+    private func uninstall() {
+        guard let statusItem else { return }
+        NSStatusBar.system.removeStatusItem(statusItem)
+        self.statusItem = nil
+        diag("菜单栏状态项已移除")
+    }
+
+    @objc private func openSettings() {
+        NSApp.activate(ignoringOtherApps: true)
+        for window in NSApp.windows where window.canBecomeMain {
+            window.makeKeyAndOrderFront(nil)
+        }
+    }
+
+    @objc private func openExtensionSettings() {
+        FIFinderSyncController.showExtensionManagementInterface()
+    }
+
+    @objc private func quit() {
+        NSApp.terminate(nil)
+    }
+}
+
+/// 菜单栏图标可见性。
+///
+/// 开关打开时 App 走 `.accessory` 激活策略 —— **不占 Dock、不进 ⌘Tab**，只驻留菜单栏。
+/// 关掉时回到 `.regular`，否则用户会同时失去 Dock 图标和菜单栏图标，等于没有任何入口。
+final class MenuBarVisibility: ObservableObject {
+    static let shared = MenuBarVisibility()
+
+    @Published var isInserted: Bool = AppConfig.load().showMenuBarIcon {
+        didSet { applyPolicy() }
+    }
+
+    private init() {}
+
+    func applyPolicy() {
+        NSApp.setActivationPolicy(isInserted ? .accessory : .regular)
+        StatusItemController.shared.setVisible(isInserted)
+    }
+}
+
+final class AppDelegate: NSObject, NSApplicationDelegate {
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        // 属性观察器在 init 期间不触发，所以启动时要显式应用一次。
+        // 延后一个主队列轮次，避免和 SwiftUI 建窗口的过程抢时序。
+        DispatchQueue.main.async {
+            MenuBarVisibility.shared.applyPolicy()
+        }
+    }
+
+    /// 驻留菜单栏时，关掉设置窗口不退出 App
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        !MenuBarVisibility.shared.isInserted
+    }
+}
+
 @main
 struct RightClickMateApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var delegate
+
     var body: some Scene {
         Window(AppInfo.name, id: "settings") {
             SettingsView()
@@ -225,11 +323,15 @@ struct GeneralPane: View {
 
     var body: some View {
         Form {
-            Section("启动与显示") {
+            Section {
                 Toggle("显示菜单栏图标", isOn: $config.showMenuBarIcon)
                 Toggle("右键菜单里显示图标", isOn: $config.showIconsInMenu)
                 Toggle("操作后播放提示音", isOn: $config.soundEnabled)
                 Toggle("新建文件后自动打开", isOn: $config.openAfterCreate)
+            } header: {
+                Text("启动与显示")
+            } footer: {
+                Text("开启菜单栏图标后，\(AppInfo.name) 只驻留菜单栏 —— 不占 Dock、不进 ⌘Tab；关掉设置窗口也不会退出。关掉这个开关则回到 Dock。")
             }
             Section {
                 LabeledContent("终端 App") {
@@ -273,6 +375,10 @@ struct GeneralPane: View {
             }
         }
         .formStyle(.grouped)
+        // 菜单栏开关：直接绑定在 Toggle 上，所以在这里同步驻留策略
+        .onChange(of: config.showMenuBarIcon) { _, newValue in
+            MenuBarVisibility.shared.isInserted = newValue
+        }
         .fileImporter(isPresented: $choosingTerminal, allowedContentTypes: [.application]) { result in
             if case .success(let url) = result { config.terminalApp = url.path }
         }
