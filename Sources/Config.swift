@@ -125,6 +125,16 @@ enum ToolKey {
         ("fileInfo", "文件信息（大小 / MD5 / SHA256）"),
         ("openInTerminal", "在终端中打开"),
     ]
+
+    /// 图片相关功能。单独分组：它们只在选中图片时才出现，跟上面的通用工具有本质区别。
+    static let image: [(key: String, title: String)] = [
+        ("imageConvert", "转格式（PNG / JPG / HEIC / TIFF）"),
+        ("imageIconSet", "生成 macOS / iOS 图标集"),
+        ("imageICNS", "生成 ICNS"),
+        ("imageWallpaper", "设为墙纸"),
+    ]
+
+    static var everyKey: [String] { (all + image).map(\.key) }
 }
 
 struct AppConfig: Codable, Equatable {
@@ -184,7 +194,7 @@ struct AppConfig: Codable, Equatable {
                 Shortcut(displayName: "影片", path: home.appendingPathComponent("Movies").path, enabled: true),
                 Shortcut(displayName: "文稿", path: home.appendingPathComponent("Documents").path, enabled: true),
             ],
-            tools: Dictionary(uniqueKeysWithValues: ToolKey.all.map { ($0.key, true) }),
+            tools: Dictionary(uniqueKeysWithValues: ToolKey.everyKey.map { ($0, true) }),
             pendingCut: []
         )
     }

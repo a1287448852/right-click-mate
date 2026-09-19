@@ -149,21 +149,38 @@ class FinderSync: FIFinderSync {
     }
 
     /// 只有选中项里真的有图片时才出现，避免常年挂一堆用不上的项。
+    /// 每一项都受设置界面里的开关控制。
     private func addImageMenu(to menu: NSMenu, selection: [URL], config: AppConfig) {
         guard selection.contains(where: { ImageTools.isImage($0) }) else { return }
 
         let submenu = NSMenu(title: "图片")
-        submenu.addItem(item("转为 PNG", #selector(convertPNG(_:))))
-        submenu.addItem(item("转为 JPG", #selector(convertJPG(_:))))
-        submenu.addItem(item("转为 HEIC", #selector(convertHEIC(_:))))
-        submenu.addItem(item("转为 TIFF", #selector(convertTIFF(_:))))
-        submenu.addItem(.separator())
-        submenu.addItem(item("生成 macOS 图标集", #selector(makeMacIconSet(_:))))
-        submenu.addItem(item("生成 iOS 图标集", #selector(makeIOSIconSet(_:))))
-        submenu.addItem(item("生成 ICNS", #selector(makeICNS(_:))))
-        submenu.addItem(.separator())
-        submenu.addItem(item("设为墙纸", #selector(setAsWallpaper(_:))))
+        var added = false
 
+        func section(_ key: String, _ items: [NSMenuItem]) {
+            guard config.tool(key), !items.isEmpty else { return }
+            if added { submenu.addItem(.separator()) }
+            items.forEach(submenu.addItem)
+            added = true
+        }
+
+        section("imageConvert", [
+            item("转为 PNG", #selector(convertPNG(_:))),
+            item("转为 JPG", #selector(convertJPG(_:))),
+            item("转为 HEIC", #selector(convertHEIC(_:))),
+            item("转为 TIFF", #selector(convertTIFF(_:))),
+        ])
+        section("imageIconSet", [
+            item("生成 macOS 图标集", #selector(makeMacIconSet(_:))),
+            item("生成 iOS 图标集", #selector(makeIOSIconSet(_:))),
+        ])
+        section("imageICNS", [
+            item("生成 ICNS", #selector(makeICNS(_:))),
+        ])
+        section("imageWallpaper", [
+            item("设为墙纸", #selector(setAsWallpaper(_:))),
+        ])
+
+        guard added else { return }
         let parent = NSMenuItem(title: "图片", action: nil, keyEquivalent: "")
         parent.submenu = submenu
         menu.addItem(.separator())

@@ -390,15 +390,28 @@ struct GeneralPane: View {
 struct ToolsPane: View {
     @Binding var config: AppConfig
 
+    private func toggle(_ tool: (key: String, title: String)) -> some View {
+        Toggle(tool.title, isOn: Binding(
+            get: { config.tool(tool.key) },
+            set: { config.tools[tool.key] = $0 }
+        ))
+    }
+
     var body: some View {
         Form {
             Section("右键菜单里出现的单项功能") {
                 ForEach(ToolKey.all, id: \.key) { tool in
-                    Toggle(tool.title, isOn: Binding(
-                        get: { config.tool(tool.key) },
-                        set: { config.tools[tool.key] = $0 }
-                    ))
+                    toggle(tool)
                 }
+            }
+            Section {
+                ForEach(ToolKey.image, id: \.key) { tool in
+                    toggle(tool)
+                }
+            } header: {
+                Text("图片处理")
+            } footer: {
+                Text("这组功能只在选中的文件里有图片时才出现在右键菜单，不选图片不会看到。")
             }
             Section {
                 Label("「彻底删除」不进废纸篓，点了就没了。", systemImage: "exclamationmark.triangle")
